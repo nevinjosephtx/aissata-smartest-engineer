@@ -73,6 +73,8 @@
     nav.tabs button.active span { text-decoration: underline; text-underline-offset: 3px; }
     .install { display:flex; gap:10px; align-items:center; justify-content:space-between; }
     .hidden { display:none !important; }
+    label.remember { display:flex; align-items:center; gap:10px; margin-top:14px; font-size:15px; color:#fff; cursor:pointer; }
+    label.remember input { width:20px; height:20px; margin:0; accent-color:#fff; }
   </style>
 </head>
 <body>
@@ -93,6 +95,7 @@
       <input id="email" type="email" autocomplete="email" required>
       <label for="password">Password</label>
       <input id="password" type="password" autocomplete="current-password" required>
+      <label class="remember"><input id="remember" type="checkbox" checked> Remember me on this device</label>
       <div class="row"><span id="authMsg" class="msg"></span><button class="primary" type="submit">Sign in</button></div>
     </form>
   </section>

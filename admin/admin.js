@@ -1,8 +1,30 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 
 const { SUPABASE_URL, SUPABASE_KEY, BUCKET, NTFY_TOPIC } = window.APP_CONFIG;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = (id) => document.getElementById(id);
+
+// ---------------- remember me ----------------
+// Checked: stay signed in on this device (localStorage).
+// Unchecked: signed out when the browser/app is closed (sessionStorage).
+const REMEMBER_KEY = "hq-remember", EMAIL_KEY = "hq-email";
+const safe = (fn, fallback = null) => { try { return fn(); } catch { return fallback; } };
+const remembering = () => safe(() => localStorage.getItem(REMEMBER_KEY) !== "0", true);
+const authStorage = {
+  getItem: (k) => safe(() => localStorage.getItem(k) ?? sessionStorage.getItem(k)),
+  setItem: (k, v) => safe(() => {
+    const [keep, drop] = remembering() ? [localStorage, sessionStorage] : [sessionStorage, localStorage];
+    keep.setItem(k, v);
+    drop.removeItem(k);
+  }),
+  removeItem: (k) => safe(() => { localStorage.removeItem(k); sessionStorage.removeItem(k); }),
+};
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { storage: authStorage, persistSession: true, autoRefreshToken: true },
+});
+
+$("remember").checked = remembering();
+const savedEmail = safe(() => localStorage.getItem(EMAIL_KEY));
+if (savedEmail) $("email").value = savedEmail;
 
 $("topic").textContent = NTFY_TOPIC;
 $("herLink").textContent = new URL("../", location.href).href;
@@ -42,7 +64,14 @@ addEventListener("hashchange", () => showTab(location.hash.slice(1)));
 $("authForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("authMsg").textContent = "Signing in…";
-  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  const remember = $("remember").checked;
+  const email = $("email").value.trim();
+  safe(() => {
+    localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+    if (remember) localStorage.setItem(EMAIL_KEY, email);
+    else localStorage.removeItem(EMAIL_KEY);
+  });
+  const { error } = await sb.auth.signInWithPassword({ email, password: $("password").value });
   $("authMsg").textContent = error ? error.message : "";
 });
 $("signOut").addEventListener("click", () => sb.auth.signOut());
