@@ -1,7 +1,7 @@
 // ================= JIGSAW GATE =================
 // Put your photo in this folder and name it photo.jpg (or change the path below).
 const PUZZLE_IMAGE = "photo.jpg";
-const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
+const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
 
 (function () {
   const play = document.getElementById("play");
@@ -102,7 +102,8 @@ const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
   function build(img) {
     const W = play.clientWidth, H = play.clientHeight;
     if (W < 50 || H < 50) { requestAnimationFrame(() => build(img)); return; } // wait for layout
-    const boardSize = Math.floor(Math.min(W * 0.8, H * 0.55, 520));
+    // Leave room for one row of loose pieces above and below the board (a piece is 1.5x a cell with its tabs).
+    const boardSize = Math.floor(Math.min(W * 0.7, H / (1 + 3 / GRID) - 8, 460));
     pieceSize = boardSize / GRID;
     margin = pieceSize * 0.25;
     boardX = Math.round((W - boardSize) / 2);
@@ -126,6 +127,7 @@ const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
     const v = [...Array(GRID)].map(() => [...Array(GRID - 1)].map(() => (Math.random() < 0.5 ? 1 : -1)));
 
     const full = pieceSize + margin * 2;
+    const slots = makeSlots(GRID * GRID, W, H, full, boardSize);
     for (let r = 0; r < GRID; r++) {
       for (let c = 0; c < GRID; c++) {
         const edges = {
@@ -155,7 +157,8 @@ const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
           homeY: boardY + r * pieceSize - margin,
           x: 0, y: 0,
         };
-        scatter(p, W, H, full, boardSize);
+        const slot = slots && slots.pop();
+        if (slot) { p.x = slot.x; p.y = slot.y; } else scatter(p, W, H, full, boardSize);
         place(p);
         cv.style.zIndex = zTop++;
         play.appendChild(cv);
@@ -163,6 +166,35 @@ const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
       }
     }
     updateProgress();
+  }
+
+  // Spread pieces evenly through the open space around the board (above/below on phones,
+  // left/right on wide screens), in shuffled order so they never start in their home spot.
+  function makeSlots(n, W, H, full, boardSize) {
+    const gap = 6;
+    const regions = [
+      { x0: 0, x1: W - full, y0: 0, y1: boardY - full - gap },                         // above
+      { x0: 0, x1: W - full, y0: boardY + boardSize + gap, y1: H - full },             // below
+      { x0: 0, x1: boardX - full - gap, y0: 0, y1: H - full },                          // left
+      { x0: boardX + boardSize + gap, x1: W - full, y0: 0, y1: H - full },              // right
+    ].filter((r) => r.x1 >= r.x0 && r.y1 >= r.y0);
+    if (!regions.length) return null;
+    const per = regions.map(() => 0);
+    for (let i = 0; i < n; i++) per[i % regions.length]++;
+    const slots = [];
+    regions.forEach((r, ri) => {
+      const k = per[ri];
+      const wide = r.x1 - r.x0 >= r.y1 - r.y0; // lay pieces out along the region's long side
+      for (let j = 0; j < k; j++) {
+        const t = k === 1 ? 0.5 : j / (k - 1);
+        const jitter = () => (Math.random() - 0.5) * full * 0.15;
+        slots.push(wide
+          ? { x: r.x0 + (r.x1 - r.x0) * t + jitter(), y: r.y0 + (r.y1 - r.y0) * Math.random() }
+          : { x: r.x0 + (r.x1 - r.x0) * Math.random(), y: r.y0 + (r.y1 - r.y0) * t + jitter() });
+      }
+    });
+    for (let i = slots.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [slots[i], slots[j]] = [slots[j], slots[i]]; }
+    return slots.map((s) => ({ x: Math.min(Math.max(0, s.x), W - full), y: Math.min(Math.max(0, s.y), H - full) }));
   }
 
   function scatter(p, W, H, full, boardSize) {
@@ -284,6 +316,8 @@ const GRID = 4; // 4 x 4 = 16 pieces. 3 = easy, 5 = hard.
       setTimeout(() => s.remove(), 1500);
     }
   }
+
+  document.getElementById("skipBtn").addEventListener("click", () => unlock(false));
 
   document.getElementById("enterBtn").addEventListener("click", () => {
     document.getElementById("gate").classList.remove("active");
