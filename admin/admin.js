@@ -176,11 +176,11 @@ async function loadGrid() {
 $("testPing").addEventListener("click", async () => {
   $("pingMsg").textContent = "Sending…";
   try {
-    const url = new URL("./#messages", location.href).href;
+    const url = window.APP_CONFIG.APP_URL;
     const res = await fetch("https://ntfy.sh/", {
       method: "POST",
       body: JSON.stringify({
-        topic: NTFY_TOPIC, title: "Test ping", message: "Ping Nevin is working 💕", tags: ["white_check_mark"],
+        topic: NTFY_TOPIC, title: "Test ping", message: "Ping Nevin is working 💕\n\nReply: " + url, tags: ["white_check_mark"],
         click: url, actions: [{ action: "view", label: "Reply", url, clear: true }],
       }),
     });

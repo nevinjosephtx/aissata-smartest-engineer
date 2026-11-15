@@ -5,7 +5,7 @@ const { SUPABASE_URL, SUPABASE_KEY, NTFY_TOPIC } = window.APP_CONFIG;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 const $ = (id) => document.getElementById(id);
 // Every ping links to Nevin's app (Aissata HQ), opened on the Message tab.
-const REPLY_URL = new URL("admin/#messages", location.href.split(/[?#]/)[0]).href;
+const REPLY_URL = window.APP_CONFIG.APP_URL;
 
 // ---------------- toast ----------------
 let toastTimer;
@@ -49,7 +49,7 @@ sendBtn.addEventListener("click", async () => {
       body: JSON.stringify({
         topic: NTFY_TOPIC,
         title: note ? "💌 Aissata says:" : "Aissata pinged you!",
-        message: note || "The smartest engineer is thinking about you 💕",
+        message: (note || "The smartest engineer is thinking about you 💕") + "\n\nReply: " + REPLY_URL,
         tags: ["heart"],
         priority: 4,
         click: REPLY_URL,

@@ -6,6 +6,9 @@ window.APP_CONFIG = {
   BUCKET: "photos",
   // Subscribe to this exact name in the ntfy app to get "Ping Nevin" notifications.
   NTFY_TOPIC: "aissata-ping-ed4ff1a00412",
+  // Public links. Every ping opens APP_URL, no matter where her site was opened from.
+  SITE_URL: "https://nevinjosephtx.github.io/aissata-smartest-engineer/",
+  APP_URL: "https://nevinjosephtx.github.io/aissata-smartest-engineer/admin/#messages",
 };
 
 window.fetchPhotos = async function () {
