@@ -2,6 +2,8 @@
 const TITLE = "SMARTEST ENGINEER";
 const BADGE = "NSBE VP";
 const MP_VERSION = "0.10.14";
+// This visit's random display font (see fonts.js)
+const DISPLAY_FONT = window.FONT_SET ? `"${window.FONT_SET.display}", Impact, sans-serif` : "Oswald, Impact, sans-serif";
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("view");
@@ -351,7 +353,7 @@ function drawLabel(W, H, now) {
   const fs = label.fs;
   const bob = Math.sin(now / 1000 * 2.2) * fs * 0.12;
   ctx.save();
-  ctx.font = `700 ${fs}px Oswald, Impact, sans-serif`;
+  ctx.font = `700 ${fs}px ${DISPLAY_FONT}`;
   const titleW = ctx.measureText(TITLE).width + fs * 1.6;
   // keep it fully on screen
   const x = Math.min(Math.max(label.x, titleW / 2 + 8), W - titleW / 2 - 8);
@@ -385,7 +387,7 @@ function drawLabel(W, H, now) {
 
   // NSBE VP badge
   const bfs = fs * 0.6;
-  ctx.font = `700 ${bfs}px Oswald, Impact, sans-serif`;
+  ctx.font = `700 ${bfs}px ${DISPLAY_FONT}`;
   const bw = ctx.measureText(BADGE).width + bfs * 1.4;
   const bh = bfs * 1.45;
   const by = fs * 0.62 + bh / 2 + fs * 0.12;

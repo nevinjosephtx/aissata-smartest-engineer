@@ -9,13 +9,13 @@
   // Each photo gets its own border style (photo #1 hearts, #2 pixel, #3 aero, ...).
   const BORDERS = [
     { cls: "f-hearts" },
-    { cls: "f-pixel", cap: "LEVEL: GENIUS ♥" },
+    { cls: "f-pixel", slot: true },
     { cls: "f-aero" },
-    { cls: "f-polaroid", cap: "my favorite engineer ♥" },
+    { cls: "f-polaroid", slot: true },
     { cls: "f-film" },
     { cls: "f-neon" },
     { cls: "f-chrome" },
-    { cls: "f-aggie", cap: "GIG 'EM ♥" },
+    { cls: "f-aggie", slot: true },
     { cls: "f-tape" },
     { cls: "f-gold" },
   ];
@@ -37,6 +37,7 @@
   ];
 
   let photos = [];
+  let captions = [];
   let index = 0;
   let current = null;
   let lastTransition = -1;
@@ -75,6 +76,7 @@
     stage.innerHTML = '<div class="g-empty">Loading photos…</div>';
     countEl.textContent = "";
     try { photos = await window.fetchPhotos(); } catch (e) { console.warn(e); photos = []; }
+    captions = window.shuffled(await window.fetchPhrases()); // a different caption order every time
     stage.innerHTML = "";
     current = null;
     if (!photos.length) {
@@ -116,13 +118,20 @@
     img.alt = `Photo ${i + 1}`;
     img.draggable = false;
     frame.appendChild(img);
-    if (b.cap) {
+    const text = captions.length ? captions[i % captions.length] : "";
+    slide.appendChild(frame);
+    if (text && b.slot) {
+      // frames with a built-in caption strip (pixel, polaroid, Aggie)
       const cap = document.createElement("span");
       cap.className = "cap";
-      cap.textContent = b.cap;
+      cap.textContent = text;
       frame.appendChild(cap);
+    } else if (text) {
+      const cap = document.createElement("div");
+      cap.className = "g-caption";
+      cap.textContent = text;
+      slide.appendChild(cap);
     }
-    slide.appendChild(frame);
     return { slide, img };
   }
 

@@ -6,7 +6,9 @@
   <title>Smartest Engineer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Dancing+Script:wght@700&family=Inter:wght@400;600&family=Press+Start+2P&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <!-- Only the pixel-frame font is fixed; everything else is picked at random by fonts.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="fonts.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,6 +18,7 @@
     <header class="gate-head">
       <div class="eyebrow">Restricted access</div>
       <h1>Only the smartest may enter.</h1>
+      <p id="gatePhrase" class="gate-phrase" aria-live="polite"></p>
       <p class="sub">Solve the puzzle to unlock. <span id="progress">0 / 4</span></p>
       <button id="skipBtn" class="skip" type="button">Skip puzzle →</button>
     </header>
@@ -26,7 +29,7 @@
       <div class="success-card">
         <div class="granted">ACCESS GRANTED</div>
         <div class="welcome">Welcome, Aissata</div>
-        <p>Verified: smartest engineer on record.</p>
+        <p id="successPhrase">Verified: smartest engineer on record.</p>
         <button id="enterBtn" class="btn-primary">Enter</button>
       </div>
     </div>
@@ -87,19 +90,8 @@
     </div>
   </div>
 
-  <!-- ============ MESSAGE FROM NEVIN ============ -->
-  <div id="loveNote" class="love-note hidden" role="dialog" aria-modal="true" aria-labelledby="noteFrom">
-    <div class="note-hearts" aria-hidden="true"></div>
-    <div class="note-card">
-      <div id="noteFrom" class="note-from">💌 Message from Nevin</div>
-      <div id="noteBody" class="note-body"></div>
-      <div id="noteTime" class="note-time"></div>
-      <div class="modal-row">
-        <button id="noteReply" class="btn-ghost" type="button">Reply</button>
-        <button id="noteClose" class="btn-primary" type="button">Close</button>
-      </div>
-    </div>
-  </div>
+  <!-- ============ MESSAGE FROM NEVIN (flashes across the screen, then fades) ============ -->
+  <div id="flash" class="flash-layer" role="status" aria-live="assertive"></div>
 
   <div id="toast" class="toast"></div>
 

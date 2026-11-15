@@ -20,11 +20,8 @@ const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
     window.addEventListener("load", () => unlock(true));
   }
 
-  const fontsReady = Promise.all([
-    document.fonts.load("700 64px 'Dancing Script'"),
-    document.fonts.load("700 54px Oswald"),
-    document.fonts.load("500 40px Oswald"),
-  ]).catch(() => {});
+  const fontsReady = window.fontsReady || Promise.resolve();
+  const F = window.FONT_SET || { display: "Oswald", script: "Dancing Script" };
   pickImage().then(
     (img) => build(img),
     () => fontsReady.then(() => build(makePlaceholder()))
@@ -78,12 +75,12 @@ const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
     heart(g, 400, 330, 300); g.fill();
     g.fillStyle = "#500000";
     g.textAlign = "center";
-    g.font = "700 64px 'Dancing Script', cursive";
+    g.font = `700 64px "${F.script}", cursive`;
     g.fillText("Aissata", 400, 345);
     g.fillStyle = "#fff";
-    g.font = "700 54px Oswald, sans-serif";
+    g.font = `700 54px "${F.display}", sans-serif`;
     g.fillText("SMARTEST ENGINEER", 400, 640);
-    g.font = "500 40px Oswald, sans-serif";
+    g.font = `700 40px "${F.display}", sans-serif`;
     g.fillText("NSBE VP  ♥  GIG 'EM", 400, 700);
     return c;
   }
@@ -293,7 +290,23 @@ const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
     progress.textContent = `${pieces.filter((p) => p.locked).length} / ${GRID * GRID}`;
   }
 
+  // Rotating phrases under the title (editable in Aissata HQ > Phrases).
+  let phraseOrder = [];
+  window.fetchPhrases().then((list) => {
+    phraseOrder = window.shuffled(list);
+    document.getElementById("successPhrase").textContent = phraseOrder[phraseOrder.length - 1];
+    const el = document.getElementById("gatePhrase");
+    let i = 0;
+    const next = () => {
+      el.classList.remove("in");
+      setTimeout(() => { el.textContent = phraseOrder[i++ % phraseOrder.length]; el.classList.add("in"); }, 400);
+    };
+    next();
+    setInterval(next, 3400);
+  });
+
   function unlock(instant) {
+    if (phraseOrder.length) document.getElementById("successPhrase").textContent = phraseOrder[(Math.random() * phraseOrder.length) | 0];
     success.classList.remove("hidden");
     if (!instant) burst();
   }

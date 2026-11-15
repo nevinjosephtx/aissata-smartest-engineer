@@ -30,12 +30,13 @@ if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) $("iosInstall"
 
 // ---------------- tabs ----------------
 function showTab(name) {
-  if (!["messages", "photos", "setup"].includes(name)) name = "messages";
+  if (!["messages", "photos", "phrases", "setup"].includes(name)) name = "messages";
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("hidden", t.id !== "tab-" + name));
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
   if (name === "photos") loadGrid();
   if (name === "messages") loadSent();
+  if (name === "phrases") loadPhrases();
 }
 document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 addEventListener("hashchange", () => showTab(location.hash.slice(1)));
@@ -189,3 +190,58 @@ $("testPing").addEventListener("click", async () => {
     $("pingMsg").textContent = "Failed: " + e.message;
   }
 });
+
+// ---------------- phrases ----------------
+$("phraseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("newPhrase").value.trim();
+  if (!text) return;
+  $("phraseMsg").textContent = "Adding...";
+  const { error } = await sb.from("phrases").insert({ text });
+  if (error) return ($("phraseMsg").textContent = error.message);
+  $("newPhrase").value = "";
+  $("phraseMsg").textContent = "Added.";
+  loadPhrases();
+});
+
+async function loadPhrases() {
+  const { data, error } = await sb.from("phrases").select("id,text,created_at").order("created_at", { ascending: false });
+  const list = $("phraseList");
+  if (error) { list.textContent = error.message; return; }
+  $("phraseCount").textContent = `(${data.length})`;
+  list.innerHTML = data.length ? "" : '<li><span class="lead">No phrases yet. The site will use the starter list.</span></li>';
+  for (const row of data) {
+    const li = document.createElement("li");
+    const input = document.createElement("input");
+    input.value = row.text;
+    input.maxLength = 120;
+    input.setAttribute("aria-label", "Phrase");
+    const state = document.createElement("span");
+    state.className = "state";
+    let saved = row.text;
+    const save = async () => {
+      const text = input.value.trim();
+      if (!text) { input.value = saved; return; }
+      if (text === saved) return;
+      state.textContent = "...";
+      const { error } = await sb.from("phrases").update({ text }).eq("id", row.id);
+      if (error) { state.textContent = "Error"; return; }
+      saved = text;
+      state.textContent = "Saved";
+      setTimeout(() => (state.textContent = ""), 1500);
+    };
+    input.addEventListener("blur", save);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") { input.value = saved; input.blur(); } });
+    const del = document.createElement("button");
+    del.textContent = "Delete";
+    del.addEventListener("click", async () => {
+      del.disabled = true;
+      const { error } = await sb.from("phrases").delete().eq("id", row.id);
+      if (error) { del.disabled = false; state.textContent = "Error"; return; }
+      li.remove();
+      $("phraseCount").textContent = `(${list.children.length})`;
+    });
+    li.append(input, state, del);
+    list.appendChild(li);
+  }
+}
