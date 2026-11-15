@@ -53,7 +53,7 @@ sendBtn.addEventListener("click", async () => {
         tags: ["heart"],
         priority: 4,
         click: REPLY_URL,
-        actions: [{ action: "view", label: "Reply 💌", url: REPLY_URL, clear: true }],
+        actions: [{ action: "view", label: "Reply", url: REPLY_URL, clear: true }],
       }),
     });
     if (!res.ok) throw new Error(res.status);

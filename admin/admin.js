@@ -237,7 +237,7 @@ $("testPing").addEventListener("click", async () => {
       method: "POST",
       body: JSON.stringify({
         topic: NTFY_TOPIC, title: "Test ping", message: "Ping Nevin is working 💕", tags: ["white_check_mark"],
-        click: url, actions: [{ action: "view", label: "Reply 💌", url, clear: true }],
+        click: url, actions: [{ action: "view", label: "Reply", url, clear: true }],
       }),
     });
     $("pingMsg").textContent = res.ok ? "Sent! Check your phone." : "Failed: " + res.status;

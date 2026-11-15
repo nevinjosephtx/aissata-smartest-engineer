@@ -67,8 +67,8 @@
       background: rgba(42,0,0,.92); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,.15);
       padding-bottom: env(safe-area-inset-bottom); }
     nav.tabs button { flex:1; background:none; color: rgba(255,255,255,.6); border-radius:0; padding:10px 4px 12px;
-      display:flex; flex-direction:column; align-items:center; gap:2px; font-size:22px; }
-    nav.tabs button span { font: 600 11px Inter,sans-serif; }
+      display:flex; flex-direction:column; align-items:center; gap:2px; font-size:15px; padding-top:16px; padding-bottom:16px; }
+    nav.tabs button span { font: 600 15px Inter,sans-serif; }
     nav.tabs button.active { color:#fff; }
     nav.tabs button.active span { text-decoration: underline; text-underline-offset: 3px; }
     .install { display:flex; gap:10px; align-items:center; justify-content:space-between; }
@@ -116,15 +116,15 @@
         <h2>💌 Message her screen</h2>
         <p class="lead">Pops up full-screen on her site instantly.</p>
         <div class="chips">
-          <button type="button" class="chip">I love you ❤️</button>
-          <button type="button" class="chip">Proud of you, genius 🎓</button>
-          <button type="button" class="chip">Calling you now 📞</button>
-          <button type="button" class="chip">Miss you more 🥺</button>
+          <button type="button" class="chip">I love you</button>
+          <button type="button" class="chip">Proud of you, genius</button>
+          <button type="button" class="chip">Calling you now</button>
+          <button type="button" class="chip">Miss you more</button>
         </div>
         <textarea id="body" maxlength="500" placeholder="Write something sweet…"></textarea>
         <div class="row">
           <span><span id="sendMsg" class="msg"></span> <span id="count" class="count">0 / 500</span></span>
-          <button id="send" class="primary">Send 💌</button>
+          <button id="send" class="primary">Send</button>
         </div>
       </div>
       <div class="card">
@@ -160,7 +160,7 @@
         <ol>
           <li>Install the free <b>ntfy</b> app.</li>
           <li>Tap <b>+</b> and subscribe to: <code id="topic"></code></li>
-          <li>Allow notifications. Each ping has a <b>Reply 💌</b> button that opens this app.</li>
+          <li>Allow notifications. Each ping has a <b>Reply</b> button that opens this app.</li>
         </ol>
         <div class="row"><span id="pingMsg" class="msg"></span><button id="testPing" class="ghost">Send test ping</button></div>
       </div>
@@ -176,9 +176,9 @@
 </main>
 
 <nav id="tabs" class="tabs hidden">
-  <button data-tab="messages" class="active">💌<span>Message</span></button>
-  <button data-tab="photos">🖼️<span>Photos</span></button>
-  <button data-tab="setup">⚙️<span>Setup</span></button>
+  <button data-tab="messages" class="active"><span>Message</span></button>
+  <button data-tab="photos"><span>Photos</span></button>
+  <button data-tab="setup"><span>Setup</span></button>
 </nav>
 
 <script src="../config.js"></script>
