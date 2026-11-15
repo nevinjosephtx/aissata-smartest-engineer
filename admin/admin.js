@@ -3,28 +3,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const { SUPABASE_URL, SUPABASE_KEY, BUCKET, NTFY_TOPIC } = window.APP_CONFIG;
 const $ = (id) => document.getElementById(id);
 
-// ---------------- remember me ----------------
-// Checked: stay signed in on this device (localStorage).
-// Unchecked: signed out when the browser/app is closed (sessionStorage).
-const REMEMBER_KEY = "hq-remember", EMAIL_KEY = "hq-email";
-const safe = (fn, fallback = null) => { try { return fn(); } catch { return fallback; } };
-const remembering = () => safe(() => localStorage.getItem(REMEMBER_KEY) !== "0", true);
-const authStorage = {
-  getItem: (k) => safe(() => localStorage.getItem(k) ?? sessionStorage.getItem(k)),
-  setItem: (k, v) => safe(() => {
-    const [keep, drop] = remembering() ? [localStorage, sessionStorage] : [sessionStorage, localStorage];
-    keep.setItem(k, v);
-    drop.removeItem(k);
-  }),
-  removeItem: (k) => safe(() => { localStorage.removeItem(k); sessionStorage.removeItem(k); }),
-};
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { storage: authStorage, persistSession: true, autoRefreshToken: true },
-});
-
-$("remember").checked = remembering();
-const savedEmail = safe(() => localStorage.getItem(EMAIL_KEY));
-if (savedEmail) $("email").value = savedEmail;
+// No login: the owner chose a fully open app.
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
 $("topic").textContent = NTFY_TOPIC;
 $("herLink").textContent = new URL("../", location.href).href;
@@ -60,44 +40,8 @@ function showTab(name) {
 document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 addEventListener("hashchange", () => showTab(location.hash.slice(1)));
 
-// ---------------- auth ----------------
-$("authForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  $("authMsg").textContent = "Signing in…";
-  const remember = $("remember").checked;
-  const email = $("email").value.trim();
-  safe(() => {
-    localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
-    if (remember) localStorage.setItem(EMAIL_KEY, email);
-    else localStorage.removeItem(EMAIL_KEY);
-  });
-  const { error } = await sb.auth.signInWithPassword({ email, password: $("password").value });
-  $("authMsg").textContent = error ? error.message : "";
-});
-$("signOut").addEventListener("click", () => sb.auth.signOut());
-
-let ready = false;
-sb.auth.onAuthStateChange((_event, session) => {
-  const signedIn = !!session;
-  $("authCard").classList.toggle("hidden", signedIn);
-  $("app").classList.toggle("hidden", !signedIn);
-  $("tabs").classList.toggle("hidden", !signedIn);
-  $("signOut").classList.toggle("hidden", !signedIn);
-  if (signedIn && !ready) {
-    ready = true;
-    // setTimeout: avoid calling Supabase inside the auth callback (can deadlock)
-    setTimeout(async () => {
-      const { data: isAdmin } = await sb.rpc("is_admin");
-      if (!isAdmin) {
-        $("app").innerHTML = '<div class="card"><h2>Not allowed</h2><p class="lead">This account isn\'t the owner.</p></div>';
-        $("tabs").classList.add("hidden");
-        return;
-      }
-      showTab(location.hash.slice(1));
-    });
-  }
-  if (!signedIn) ready = false;
-});
+// Open straight to the app.
+showTab(location.hash.slice(1));
 
 // ---------------- messages ----------------
 document.querySelectorAll(".chip").forEach((c) =>
