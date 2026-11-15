@@ -1,0 +1,42 @@
+# Keeps everything awake:
+#  - Supabase free projects pause after 7 days with no activity -> ping the database daily.
+#  - GitHub disables scheduled workflows after 60 days with no repo activity -> touch a file monthly.
+name: Keep site awake
+
+on:
+  schedule:
+    - cron: "17 14 * * *" # every day, 14:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the database
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://dbkfpfydvjtkusnxwchb.supabase.co/rest/v1/photos?select=id&limit=1" \
+            -H "apikey: sb_publishable_mgfj5QzAqYDeNIxwXwR-tg_5HI9e7mh")
+          echo "database answered $code"
+          test "$code" = "200"
+
+      - name: Check both sites are up
+        run: |
+          for u in "https://nevinjosephtx.github.io/aissata-smartest-engineer/" "https://nevinjosephtx.github.io/aissata-smartest-engineer/admin/"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$u"); echo "$u -> $code"; test "$code" = "200"
+          done
+
+      - uses: actions/checkout@v4
+
+      - name: Monthly touch so GitHub keeps this schedule on
+        run: |
+          if [ "$(date -u +%d)" != "01" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then echo "not the 1st, skipping"; exit 0; fi
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive.txt
+          git config user.name "keepalive-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive.txt
+          git commit -m "keepalive $(date -u +%Y-%m-%d)" || exit 0
+          git push
