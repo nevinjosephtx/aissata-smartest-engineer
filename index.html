@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Smartest Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Dancing+Script:wght@700&family=Inter:wght@400;600&family=Press+Start+2P&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ============ SCREEN 1: JIGSAW GATE ============ -->
+  <section id="gate" class="screen active">
+    <header class="gate-head">
+      <div class="eyebrow">Restricted access</div>
+      <h1>Only the smartest may enter.</h1>
+      <p class="sub">Solve the puzzle to unlock. <span id="progress">0 / 16</span></p>
+    </header>
+    <div id="play">
+      <div id="board"></div>
+    </div>
+    <div id="success" class="overlay hidden">
+      <div class="success-card">
+        <div class="granted">ACCESS GRANTED</div>
+        <div class="welcome">Welcome, Aissata</div>
+        <p>Verified: smartest engineer on record.</p>
+        <button id="enterBtn" class="btn-primary">Enter ♥</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 2: CAMERA ============ -->
+  <section id="cam" class="screen">
+    <header class="cam-head">
+      <button id="galleryBtn" class="pill">🖼️ Gallery</button>
+      <div class="welcome small">Welcome, Aissata ♥</div>
+      <button id="pingBtn" class="pill">📲 Ping Nevin</button>
+    </header>
+    <div id="stage">
+      <canvas id="view"></canvas>
+      <video id="video" playsinline muted autoplay></video>
+      <div id="camStatus" class="status">Starting camera…</div>
+    </div>
+    <nav id="controls">
+      <button class="fx on" data-fx="hearts">💕<span>Hearts</span></button>
+      <button class="fx" data-fx="petals">🌹<span>Petals</span></button>
+      <button class="fx" data-fx="glow">✨<span>Dreamy</span></button>
+      <button class="fx" data-fx="frame">💗<span>Heart Frame</span></button>
+      <button class="fx" data-fx="blush">😊<span>Blush + Halo</span></button>
+      <button id="snap" class="snap">📸<span>Snapshot</span></button>
+    </nav>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <div id="gallery" class="gallery hidden" aria-hidden="true">
+    <div class="g-top">
+      <span id="gCount" class="g-count"></span>
+      <button id="gClose" class="g-btn" aria-label="Close gallery">✕</button>
+    </div>
+    <div id="gStage" class="g-stage"></div>
+    <div class="g-bottom">
+      <button id="gPrev" class="g-btn" aria-label="Previous">‹</button>
+      <button id="gPlay" class="g-btn" aria-label="Pause">❚❚</button>
+      <button id="gNext" class="g-btn" aria-label="Next">›</button>
+    </div>
+  </div>
+
+  <!-- ============ PING COMPOSER ============ -->
+  <div id="compose" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
+    <div class="modal-card">
+      <h2 id="composeTitle">Ping Nevin 📲</h2>
+      <div class="chips">
+        <button type="button" class="chip">Miss you 🥺</button>
+        <button type="button" class="chip">Call me 📞</button>
+        <button type="button" class="chip">Thinking of you 💭</button>
+        <button type="button" class="chip">I'm a genius 😎</button>
+      </div>
+      <textarea id="pingText" maxlength="280" rows="3" placeholder="Add a message (optional)…"></textarea>
+      <div class="modal-row">
+        <button id="composeCancel" class="btn-ghost" type="button">Cancel</button>
+        <button id="composeSend" class="btn-primary" type="button">Send 💌</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MESSAGE FROM NEVIN ============ -->
+  <div id="loveNote" class="love-note hidden" role="dialog" aria-modal="true" aria-labelledby="noteFrom">
+    <div class="note-hearts" aria-hidden="true"></div>
+    <div class="note-card">
+      <div id="noteFrom" class="note-from">💌 Message from Nevin</div>
+      <div id="noteBody" class="note-body"></div>
+      <div id="noteTime" class="note-time"></div>
+      <div class="modal-row">
+        <button id="noteReply" class="btn-ghost" type="button">Reply</button>
+        <button id="noteClose" class="btn-primary" type="button">Close ♥</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="config.js"></script>
+  <script src="puzzle.js"></script>
+  <script src="gallery.js"></script>
+  <script type="module" src="messages.js"></script>
+  <script type="module" src="camera.js"></script>
+</body>
+</html>
