@@ -30,7 +30,7 @@ function render(row, fresh) {
     card.classList.remove("pulse");
     void card.offsetWidth; // restart the animation
     card.classList.add("pulse");
-    window.showToast && window.showToast(`Nevin is listening to ${row.title}`);
+    window.showToast && window.showToast(`Our latest song: ${row.title}`);
   }
 }
 
