@@ -22,10 +22,42 @@ const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
 
   const fontsReady = window.fontsReady || Promise.resolve();
   const F = window.FONT_SET || { display: "Oswald", script: "Dancing Script" };
-  pickImage().then(
-    (img) => build(img),
-    () => fontsReady.then(() => build(makePlaceholder()))
-  );
+
+  // ---------- pick this visit's unlock game (never the same twice in a row) ----------
+  const GAMES = ["jigsaw", "spin", "circuit", "logic", "trace", "math", "reveal"];
+  const forced = new URLSearchParams(location.search).get("game"); // ?game=circuit to test one
+  let lastGame = null;
+  try { lastGame = localStorage.getItem("lastGame"); } catch {}
+  let game = GAMES.includes(forced) ? forced : null;
+  while (!game) { const g = GAMES[(Math.random() * GAMES.length) | 0]; if (g !== lastGame) game = g; }
+  try { localStorage.setItem("lastGame", game); } catch {}
+  document.getElementById("gate").dataset.game = game;
+
+  const hintEl = document.getElementById("gameHint");
+  const setHint = (t) => (hintEl.textContent = t);
+  const setProgress = (t) => { progress.textContent = t || ""; progress.classList.toggle("hidden", !t); };
+  let unlocked = false;
+  const photo = () => pickImage().catch(() => null).then((img) => img || fontsReady.then(makePlaceholder));
+  const ready = () => new Promise((res) => {
+    const check = () => (play.clientWidth > 50 && play.clientHeight > 50 ? res() : requestAnimationFrame(check));
+    check();
+  });
+
+  if (game === "jigsaw") {
+    setHint("Put the photo back together.");
+    pickImage().then(
+      (img) => build(img),
+      () => fontsReady.then(() => build(makePlaceholder()))
+    );
+  } else {
+    board.style.display = "none";
+    setProgress(null);
+    window.GATE_GAMES[game]({
+      play, dpr, setHint, setProgress, photo, ready,
+      size: () => ({ W: play.clientWidth, H: play.clientHeight }),
+      done: () => { if (!unlocked) setTimeout(() => unlock(false), 500); },
+    });
+  }
 
   // Pick a random uploaded photo — never the same one twice in a row.
   async function pickImage() {
@@ -306,6 +338,8 @@ const GRID = 2; // 2 x 2 = 4 pieces. 3 = 9, 4 = 16, 5 = 25.
   });
 
   function unlock(instant) {
+    if (unlocked) return;
+    unlocked = true;
     if (phraseOrder.length) document.getElementById("successPhrase").textContent = phraseOrder[(Math.random() * phraseOrder.length) | 0];
     success.classList.remove("hidden");
     if (!instant) burst();

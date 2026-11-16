@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Only the pixel-frame font is fixed; everything else is picked at random by fonts.js -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <script src="fonts.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <script src="fonts.js?v=20261116"></script>
+  <link rel="stylesheet" href="styles.css?v=20261116">
 </head>
 <body>
 
@@ -19,7 +19,7 @@
       <div class="eyebrow">Restricted access</div>
       <h1>Only the smartest may enter.</h1>
       <p id="gatePhrase" class="gate-phrase" aria-live="polite"></p>
-      <p class="sub">Solve the puzzle to unlock. <span id="progress">0 / 4</span></p>
+      <p class="sub"><span id="gameHint">Solve the puzzle to unlock.</span> <span id="progress">0 / 4</span></p>
       <button id="skipBtn" class="skip" type="button">Skip puzzle →</button>
     </header>
     <div id="play">
@@ -145,11 +145,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="config.js"></script>
-  <script src="puzzle.js"></script>
-  <script src="gallery.js"></script>
-  <script type="module" src="messages.js"></script>
-  <script type="module" src="song.js"></script>
-  <script type="module" src="camera.js"></script>
+  <script src="config.js?v=20261116"></script>
+  <script src="games.js?v=20261116"></script>
+  <script src="puzzle.js?v=20261116"></script>
+  <script src="gallery.js?v=20261116"></script>
+  <script type="module" src="messages.js?v=20261116"></script>
+  <script type="module" src="song.js?v=20261116"></script>
+  <script type="module" src="camera.js?v=20261116"></script>
 </body>
 </html>
