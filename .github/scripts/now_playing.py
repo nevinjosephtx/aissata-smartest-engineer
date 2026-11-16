@@ -32,16 +32,51 @@ def supabase(method, path, body=None, extra_headers=None):
         return json.loads(text) if text else None
 
 
+def normalize_headers(raw):
+    """Accepts any of: just the Cookie value, full raw request headers, or headers
+    copied from Chrome's table view (name and value on separate lines or tab-separated).
+    Returns raw headers in the 'name: value' form ytmusicapi expects."""
+    raw = raw.strip().strip('"').strip("'")
+    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+
+    def find(name):
+        for i, line in enumerate(lines):
+            low = line.lower()
+            for sep in (":", "\t"):
+                if low.startswith(name + sep):
+                    value = line[len(name) + 1:].strip()
+                    if value:
+                        return value
+            if low == name and i + 1 < len(lines):  # table view: value on the next line
+                return lines[i + 1]
+        return None
+
+    cookie = find("cookie")
+    if cookie is None and "SAPISID=" in raw and "=" in raw and ";" in raw:
+        cookie = " ".join(lines)  # they pasted just the Cookie value
+    if not cookie or "SAPISID=" not in cookie:
+        raise RuntimeError(
+            "Couldn't find your YouTube Music Cookie (it must contain SAPISID=). "
+            "Copy the value of the 'Cookie' row under Request headers (see Aissata HQ > Setup)."
+        )
+    authuser = find("x-goog-authuser") or "0"
+    # ytmusicapi recomputes the authorization hash from the cookie on every request;
+    # this line just tells it we're using browser-style login.
+    return "\n".join([
+        "accept: */*",
+        "content-type: application/json",
+        "authorization: SAPISIDHASH 0_placeholder",
+        f"cookie: {cookie}",
+        f"x-goog-authuser: {authuser}",
+        "origin: https://music.youtube.com",
+        "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+    ])
+
+
 def main():
     if not RAW_HEADERS:
         print("YTMUSIC_HEADERS secret isn't set yet - nothing to do. See Aissata HQ > Setup.")
         return
-
-    if "SAPISIDHASH" not in RAW_HEADERS:
-        raise RuntimeError(
-            "The saved headers have no 'authorization: SAPISIDHASH ...' line. "
-            "Copy the request headers from a 'browse' request on music.youtube.com (see Aissata HQ > Setup)."
-        )
 
     from ytmusicapi import YTMusic
     try:  # newer versions
@@ -49,7 +84,7 @@ def main():
     except ImportError:  # older versions
         from ytmusicapi import setup
 
-    auth = setup(filepath=None, headers_raw=RAW_HEADERS)
+    auth = setup(filepath=None, headers_raw=normalize_headers(RAW_HEADERS))
     yt = YTMusic(auth)
     history = yt.get_history()
     if not history:

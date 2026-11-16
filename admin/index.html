@@ -207,11 +207,12 @@
             <li>In <b>Chrome</b> on a computer, open <a href="https://music.youtube.com" target="_blank" rel="noopener">music.youtube.com</a> and make sure you're signed in.</li>
             <li>Press <b>F12</b> to open DevTools, then click the <b>Network</b> tab.</li>
             <li>In the filter box, type <code>browse</code>. Then click <b>Library</b> in YouTube Music so a request shows up.</li>
-            <li>Click a <code>browse?...</code> request whose method is <b>POST</b>. Under <b>Headers</b>, scroll to <b>Request Headers</b>, turn on <b>Raw</b>, select everything in that section and copy it. It must include a line starting with <code>authorization: SAPISIDHASH</code>.</li>
-            <li>Open <a href="https://github.com/nevinjosephtx/aissata-smartest-engineer/settings/secrets/actions/new" target="_blank" rel="noopener">your GitHub secret page</a>. Name: <code>YTMUSIC_HEADERS</code>. Paste the headers as the value and click <b>Add secret</b>.</li>
+            <li>Click a <code>browse?...</code> line, then <b>Headers</b> on the right. Scroll to <b>Request headers</b> and find the row named <b>Cookie</b>.</li>
+            <li>Copy just that row's value: right-click it and choose <b>Copy value</b>, or click into the value, press <b>Ctrl+A</b> and <b>Ctrl+C</b>. It's long and contains <code>SAPISID=</code>. (Copying all the request headers also works.)</li>
+            <li>Open <a href="https://github.com/nevinjosephtx/aissata-smartest-engineer/settings/secrets/actions/new" target="_blank" rel="noopener">your GitHub secret page</a>. Name: <code>YTMUSIC_HEADERS</code>. Paste the Cookie value as the secret and click <b>Add secret</b>.</li>
             <li>Start it now: open <a href="https://github.com/nevinjosephtx/aissata-smartest-engineer/actions/workflows/now-playing.yml" target="_blank" rel="noopener">Update last song</a>, click <b>Run workflow</b>. After that it runs by itself about every 15 minutes.</li>
           </ol>
-          <p class="lead" style="margin-top:10px">Those headers let the job read your YouTube Music account, so keep them private: only paste them into GitHub. If you sign out of YouTube Music, they stop working; redo these steps.</p>
+          <p class="lead" style="margin-top:10px">That cookie is your YouTube Music login, so keep it private: only paste it into GitHub, never into chats or screenshots. If you sign out of YouTube Music, they stop working; redo these steps.</p>
         </details>
       </div>
       <div class="card">
