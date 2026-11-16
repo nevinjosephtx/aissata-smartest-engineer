@@ -430,4 +430,29 @@ function snapshot() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }, "image/png");
+  // Also keep a copy for Nevin (shows in Aissata HQ > Snaps).
+  canvas.toBlob((jpg) => jpg && saveSnapshot(jpg), "image/jpeg", 0.9);
+}
+
+async function saveSnapshot(blob) {
+  const { SUPABASE_URL, SUPABASE_KEY, BUCKET } = window.APP_CONFIG;
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+  const path = `snapshots/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  try {
+    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "image/jpeg", "cache-control": "31536000" },
+      body: blob,
+    });
+    if (!up.ok) throw new Error("upload " + up.status);
+    const row = await fetch(`${SUPABASE_URL}/rest/v1/snapshots`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ path }),
+    });
+    if (!row.ok) throw new Error("save " + row.status);
+    window.showToast && window.showToast("Snapshot saved (Nevin gets a copy)");
+  } catch (e) {
+    console.warn("snapshot save failed", e);
+  }
 }

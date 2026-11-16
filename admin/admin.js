@@ -30,12 +30,13 @@ if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) $("iosInstall"
 
 // ---------------- tabs ----------------
 function showTab(name) {
-  if (!["messages", "photos", "phrases", "setup"].includes(name)) name = "messages";
+  if (!["messages", "photos", "snaps", "phrases", "setup"].includes(name)) name = "messages";
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("hidden", t.id !== "tab-" + name));
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
   if (name === "photos") loadGrid();
-  if (name === "messages") loadSent();
+  if (name === "messages") loadThread();
+  if (name === "snaps") loadSnaps();
   if (name === "phrases") loadPhrases();
 }
 document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
@@ -66,32 +67,111 @@ $("send").addEventListener("click", async () => {
   $("body").value = "";
   $("count").textContent = "0 / 500";
   $("sendMsg").textContent = "Sent! 💌";
-  loadSent();
+  loadThread();
 });
 
-async function loadSent() {
-  const { data, error } = await sb.from("messages").select("id,body,created_at").order("created_at", { ascending: false }).limit(15);
-  const list = $("sentList");
-  list.innerHTML = "";
-  if (error) { list.textContent = error.message; return; }
-  if (!data.length) { list.innerHTML = '<li><span class="t">Nothing sent yet.</span></li>'; return; }
-  for (const m of data) {
-    const li = document.createElement("li");
-    const left = document.createElement("div");
-    const b = document.createElement("div"); b.className = "b"; b.textContent = m.body;
-    const t = document.createElement("div"); t.className = "t"; t.textContent = new Date(m.created_at).toLocaleString();
-    left.append(b, t);
-    const del = document.createElement("button");
-    del.textContent = "Unsend";
-    del.addEventListener("click", async () => {
-      del.disabled = true;
-      await sb.from("messages").delete().eq("id", m.id);
-      loadSent();
-    });
-    li.append(left, del);
-    list.appendChild(li);
+// Conversation with Aissata: her pings on the left, your messages on the right.
+async function loadThread() {
+  const { data, error } = await sb.from("messages").select("id,body,sender,created_at,read_at")
+    .order("created_at", { ascending: false }).limit(200);
+  const box = $("thread");
+  if (error) { box.textContent = error.message; return; }
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  box.innerHTML = data.length ? "" : '<div class="empty">No messages yet.</div>';
+  const rows = data.reverse();
+  // read receipt only under your latest message
+  const lastMine = [...rows].reverse().find((m) => m.sender === "nevin");
+  let lastDay = null;
+  for (const m of rows) {
+    const when = new Date(m.created_at);
+    if (when.toDateString() !== lastDay) {
+      lastDay = when.toDateString();
+      const sep = document.createElement("div");
+      sep.className = "t-day";
+      sep.textContent = dayLabel(when);
+      box.appendChild(sep);
+    }
+    const row = document.createElement("div");
+    row.className = "t-row " + (m.sender === "nevin" ? "me" : "her");
+    const b = document.createElement("div");
+    b.className = "t-bubble";
+    b.textContent = m.body;
+    const meta = document.createElement("div");
+    meta.className = "t-meta";
+    const time = document.createElement("span");
+    time.textContent = when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    meta.appendChild(time);
+    if (m.sender === "nevin") {
+      if (m === lastMine) {
+        const r = document.createElement("span");
+        r.textContent = m.read_at ? `Seen ${new Date(m.read_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Delivered";
+        meta.appendChild(r);
+      }
+      const del = document.createElement("button");
+      del.textContent = "Unsend";
+      del.addEventListener("click", async () => {
+        del.disabled = true;
+        await sb.from("messages").delete().eq("id", m.id);
+        loadThread();
+      });
+      meta.appendChild(del);
+    }
+    row.append(b, meta);
+    box.appendChild(row);
   }
+  if (atBottom || !box.dataset.loaded) box.scrollTop = box.scrollHeight;
+  box.dataset.loaded = "1";
 }
+
+function dayLabel(d) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const that = new Date(d); that.setHours(0, 0, 0, 0);
+  const diff = Math.round((today - that) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 7) return that.toLocaleDateString([], { weekday: "long" });
+  return that.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+}
+
+// ---------------- snapshots she took ----------------
+async function loadSnaps() {
+  const { data, error } = await sb.from("snapshots").select("id,path,created_at").order("created_at", { ascending: false });
+  const grid = $("snapGrid");
+  if (error) { grid.textContent = error.message; return; }
+  $("snapCount").textContent = `(${data.length})`;
+  grid.innerHTML = data.length ? "" : '<p class="lead">No snapshots yet. They show up here when she taps Snapshot.</p>';
+  data.forEach((row, i) => {
+    const url = sb.storage.from(BUCKET).getPublicUrl(row.path).data.publicUrl;
+    const t = document.createElement("div");
+    t.className = "snap-tile";
+    const a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener";
+    const img = document.createElement("img");
+    img.loading = "lazy"; img.alt = `Snapshot from ${new Date(row.created_at).toLocaleString()}`; img.src = url;
+    a.appendChild(img);
+    const del = document.createElement("button");
+    del.textContent = "Delete";
+    del.addEventListener("click", async () => {
+      if (!confirm("Delete this snapshot?")) return;
+      del.disabled = true;
+      await sb.storage.from(BUCKET).remove([row.path]);
+      await sb.from("snapshots").delete().eq("id", row.id);
+      loadSnaps();
+    });
+    const n = document.createElement("span");
+    n.className = "n";
+    n.textContent = new Date(row.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    t.append(a, del, n);
+    grid.appendChild(t);
+  });
+}
+
+// ---------------- live updates ----------------
+const tabOpen = (name) => !$("tab-" + name).classList.contains("hidden");
+sb.channel("hq-live")
+  .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => { if (tabOpen("messages")) loadThread(); })
+  .on("postgres_changes", { event: "*", schema: "public", table: "snapshots" }, () => { if (tabOpen("snaps")) loadSnaps(); })
+  .subscribe();
 
 // ---------------- photos ----------------
 const drop = $("drop"), file = $("file");

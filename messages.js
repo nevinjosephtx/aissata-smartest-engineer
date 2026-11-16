@@ -16,6 +16,7 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
 }
+window.showToast = showToast;
 
 // ---------------- composer ----------------
 const compose = $("compose"), text = $("pingText"), sendBtn = $("composeSend");
@@ -40,8 +41,16 @@ document.querySelectorAll(".chip").forEach((c) =>
 sendBtn.addEventListener("click", async () => {
   const wait = 15000 - (Date.now() - lastPing);
   if (wait > 0) return showToast(`Easy, genius 😄 try again in ${Math.ceil(wait / 1000)}s`);
-  const note = text.value.trim();
   sendBtn.disabled = true;
+  const ok = await sendToNevin(text.value.trim());
+  sendBtn.disabled = false;
+  if (ok) { lastPing = Date.now(); text.value = ""; closeCompose(); showToast("Sent to Nevin's phone 💌"); }
+});
+
+// Saves the message to the chat history AND pushes it to Nevin's phone.
+async function sendToNevin(note) {
+  const body = note || "Pinged you";
+  const saved = sb.from("messages").insert({ body, sender: "aissata" }).then(({ error }) => { if (error) console.warn(error); });
   try {
     // Plain-text body (JSON inside) keeps this a "simple" request — no CORS preflight.
     const res = await fetch("https://ntfy.sh/", {
@@ -57,17 +66,14 @@ sendBtn.addEventListener("click", async () => {
       }),
     });
     if (!res.ok) throw new Error(res.status);
-    lastPing = Date.now();
-    text.value = "";
-    closeCompose();
-    showToast("Sent to Nevin's phone 💌");
+    await saved;
+    return true;
   } catch (e) {
     console.warn(e);
     showToast("Couldn't reach Nevin's phone — try again");
-  } finally {
-    sendBtn.disabled = false;
+    return false;
   }
-});
+}
 
 // ---------------- incoming messages from Nevin ----------------
 const layer = $("flash");
@@ -105,6 +111,7 @@ async function next() {
   try { navigator.vibrate && navigator.userActivation?.hasBeenActive && navigator.vibrate([60, 60, 120]); } catch {}
   try { await flash(msg.body); } catch (e) { console.warn(e); }
   markSeen(msg.id);
+  markRead(msg.id);
   await wait(500);
   next();
 }
@@ -254,8 +261,147 @@ function chime() {
   } catch {}
 }
 
+// ---------------- read receipts + missed messages ----------------
+function markRead(ids) {
+  ids = [].concat(ids).filter(Boolean);
+  if (!ids.length) return Promise.resolve();
+  return sb.from("messages").update({ read_at: new Date().toISOString() }).in("id", ids).is("read_at", null)
+    .then(({ error }) => { if (error) console.warn(error); refreshUnread(); });
+}
+
+const missed = $("missed"), badge = $("chatBadge");
+const baseTitle = document.title;
+let missedDismissed = false;
+
+async function refreshUnread() {
+  const { count, error } = await sb.from("messages").select("id", { count: "exact", head: true })
+    .eq("sender", "nevin").is("read_at", null);
+  if (error) return console.warn(error);
+  setUnread(count || 0);
+}
+
+function setUnread(n) {
+  badge.textContent = n > 9 ? "9+" : String(n);
+  badge.classList.toggle("hidden", n === 0);
+  document.title = n ? `(${n}) ${baseTitle}` : baseTitle;
+  $("missedText").textContent = n === 1 ? "You missed a message from Nevin" : `You missed ${n} messages from Nevin`;
+  missed.classList.toggle("hidden", n === 0 || chatOpen || missedDismissed);
+}
+$("missedOpen").addEventListener("click", () => openChat());
+
+// ---------------- chat history (text-message style) ----------------
+const chat = $("chat"), list = $("chatList"), chatText = $("chatText");
+let chatOpen = false;
+let lastDay = null;
+const rendered = new Set();
+
+$("chatBtn").addEventListener("click", () => openChat());
+$("chatClose").addEventListener("click", closeChat);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && chatOpen) closeChat(); });
+
+async function openChat() {
+  chatOpen = true;
+  chat.classList.remove("hidden");
+  missed.classList.add("hidden");
+  list.innerHTML = '<div class="chat-empty">Loading…</div>';
+  const { data, error } = await sb.from("messages").select("id,body,sender,created_at,read_at")
+    .order("created_at", { ascending: false }).limit(300);
+  list.innerHTML = "";
+  rendered.clear();
+  lastDay = null;
+  if (error) { list.innerHTML = '<div class="chat-empty">Couldn\'t load messages.</div>'; return; }
+  if (!data.length) list.innerHTML = '<div class="chat-empty">No messages yet. Say hi!</div>';
+  data.reverse().forEach((m) => appendBubble(m, false));
+  list.scrollTop = list.scrollHeight;
+  // opening the chat counts as reading everything
+  const unread = data.filter((m) => m.sender === "nevin" && !m.read_at).map((m) => m.id);
+  markRead(unread);
+  missedDismissed = false;
+}
+
+function closeChat() {
+  chatOpen = false;
+  chat.classList.add("hidden");
+  refreshUnread();
+}
+
+function dayLabel(d) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const that = new Date(d); that.setHours(0, 0, 0, 0);
+  const diff = Math.round((today - that) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 7) return that.toLocaleDateString([], { weekday: "long" });
+  return that.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: that.getFullYear() === today.getFullYear() ? undefined : "numeric" });
+}
+
+function appendBubble(m, scroll = true) {
+  if (!m || rendered.has(m.id)) return;
+  rendered.add(m.id);
+  const empty = list.querySelector(".chat-empty");
+  if (empty) empty.remove();
+  const when = new Date(m.created_at);
+  const day = when.toDateString();
+  if (day !== lastDay) {
+    lastDay = day;
+    const sep = document.createElement("div");
+    sep.className = "chat-day";
+    sep.textContent = dayLabel(when);
+    list.appendChild(sep);
+  }
+  const row = document.createElement("div");
+  row.className = "chat-row " + (m.sender === "aissata" ? "me" : "them");
+  row.dataset.id = m.id;
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = m.body;
+  const time = document.createElement("div");
+  time.className = "chat-time";
+  time.textContent = when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  row.append(bubble, time);
+  list.appendChild(row);
+  if (scroll) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+}
+
+let lastChatSend = 0;
+$("chatForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const note = chatText.value.trim();
+  if (!note) return;
+  if (Date.now() - lastChatSend < 3000) return showToast("One sec…");
+  lastChatSend = Date.now();
+  $("chatSend").disabled = true;
+  const ok = await sendToNevin(note);
+  $("chatSend").disabled = false;
+  if (ok) chatText.value = "";
+});
+
+// ---------------- live updates ----------------
+function onNew(m) {
+  if (chatOpen) {
+    appendBubble(m);
+    if (m.sender === "nevin") markRead(m.id);
+    return;
+  }
+  if (m.sender !== "nevin") return;
+  if (document.hidden) {
+    // she isn't looking: keep it as a missed-message notification instead of flashing
+    missedDismissed = false;
+    refreshUnread();
+    return;
+  }
+  enqueue(m);
+}
+
 sb.channel("love-notes")
-  .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (p) => enqueue(p.new))
+  .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (p) => onNew(p.new))
+  .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (p) => {
+    const row = list.querySelector(`[data-id="${p.old.id}"]`);
+    if (row) row.remove();
+    refreshUnread();
+  })
   .subscribe();
 
-// No catch-up on load: old messages are never shown again.
+// Old messages never flash again, but unread ones show as a missed-message notification.
+refreshUnread();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshUnread(); });
