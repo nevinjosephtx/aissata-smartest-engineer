@@ -1,0 +1,32 @@
+# Every 15 minutes: read Nevin's latest YouTube Music song and show it on Aissata's site.
+name: Update last song
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: now-playing
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install YouTube Music reader
+        run: pip install --quiet "ytmusicapi>=1.8"
+      - name: Save latest song
+        run: python .github/scripts/now_playing.py
+        env:
+          YTMUSIC_HEADERS: ${{ secrets.YTMUSIC_HEADERS }}
+          SUPABASE_URL: https://dbkfpfydvjtkusnxwchb.supabase.co
+          SUPABASE_KEY: sb_publishable_mgfj5QzAqYDeNIxwXwR-tg_5HI9e7mh

@@ -37,6 +37,7 @@ function showTab(name) {
   if (name === "photos") loadGrid();
   if (name === "messages") loadThread();
   if (name === "snaps") loadSnaps();
+  if (name === "setup") loadMusic();
   if (name === "phrases") loadPhrases();
 }
 document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
@@ -325,3 +326,31 @@ async function loadPhrases() {
     list.appendChild(li);
   }
 }
+
+// ---------------- your music (synced by the "Update last song" job) ----------------
+async function loadMusic() {
+  const box = $("musicStatus");
+  const { data, error } = await sb.from("now_playing").select("*").eq("id", 1).maybeSingle();
+  if (error) { box.textContent = error.message; return; }
+  if (!data) {
+    box.innerHTML = '<span class="lead">Not synced yet. Follow the steps below once, and her site will show your latest song.</span>';
+    return;
+  }
+  const since = (iso) => {
+    const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    return m < 2 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} hr ago` : `${Math.round(m / 1440)} days ago`;
+  };
+  box.innerHTML = "";
+  const img = document.createElement("img");
+  img.alt = "";
+  img.src = data.thumbnail || `https://i.ytimg.com/vi/${data.video_id}/hqdefault.jpg`;
+  const text = document.createElement("div");
+  const t = document.createElement("div"); t.className = "t"; t.textContent = data.title || "Untitled";
+  const m1 = document.createElement("div"); m1.className = "m"; m1.textContent = data.artist || "";
+  const m2 = document.createElement("div"); m2.className = "m";
+  const stale = Date.now() - new Date(data.checked_at).getTime() > 2 * 3600 * 1000;
+  m2.textContent = `On her site · last checked ${since(data.checked_at)}${stale ? " (sync may be broken: redo setup)" : ""}`;
+  text.append(t, m1, m2);
+  box.append(img, text);
+}
+

@@ -475,3 +475,31 @@ h1 {
   font: 600 15px var(--font-body); cursor: pointer;
 }
 .chat-send:disabled { opacity: .6; }
+
+/* ---------- Nevin's last song ---------- */
+.song {
+  display: flex; align-items: center; gap: 12px; margin: 0 16px 10px; padding: 8px 10px 8px 8px;
+  border-radius: 16px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.28);
+  color: #fff; text-align: left; cursor: pointer; font: inherit; align-self: center;
+  width: min(560px, calc(100% - 32px));
+}
+.song.hidden { display: none; }
+.song:active { transform: scale(.98); }
+.song.pulse { animation: songPulse 1.2s ease 2; }
+@keyframes songPulse { 50% { box-shadow: 0 0 0 4px rgba(255,143,171,.6); } }
+.song-art { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #000; }
+.song-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.song-label { font: 600 11px var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--rose); }
+.song-title { font: 600 15px var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-meta { font: 12px var(--font-body); color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-play {
+  flex-shrink: 0; font: 600 13px var(--font-body); color: var(--maroon); background: #fff;
+  border-radius: 99px; padding: 8px 14px;
+}
+.player-card { width: min(640px, 100%); }
+.player-frame { position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; }
+.player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.player-title { font: 700 20px var(--font-display); margin-top: 14px; }
+.player-artist { font: 14px var(--font-body); color: var(--gray); margin-top: 2px; }
+.player-card .modal-row { flex-wrap: wrap; }
+.player-card .btn-ghost { text-decoration: none; text-align: center; }

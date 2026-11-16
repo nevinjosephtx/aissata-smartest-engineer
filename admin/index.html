@@ -73,6 +73,14 @@
     nav.tabs button.active span { text-decoration: underline; text-underline-offset: 3px; }
     .install { display:flex; gap:10px; align-items:center; justify-content:space-between; }
     .hidden { display:none !important; }
+    .music-status { display:flex; gap:12px; align-items:center; }
+    .music-status img { width:56px; height:56px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+    .music-status .t { font-weight:600; }
+    .music-status .m { font-size:13px; color:var(--gray); }
+    details.howto { margin-top:14px; }
+    details.howto summary { cursor:pointer; font-weight:600; }
+    details.howto ol { margin-top:10px; }
+    details.howto a { color:#fff; }
     .thread { max-height: 52vh; overflow-y: auto; display:flex; flex-direction:column; gap:2px; padding: 4px 2px; }
     .thread .empty { color: var(--gray); text-align:center; padding: 20px 0; font-size:14px; }
     .t-day { align-self:center; margin: 12px 0 6px; font-size:12px; font-weight:600; color:#c9b3b3; }
@@ -190,6 +198,22 @@
 
     <!-- SETUP TAB -->
     <section id="tab-setup" class="tab hidden">
+      <div class="card">
+        <h2>Your music</h2>
+        <div id="musicStatus" class="music-status"><span class="lead">Checking...</span></div>
+        <details class="howto">
+          <summary>Set up automatic song sync (one time, on a computer)</summary>
+          <ol>
+            <li>In <b>Chrome</b> on a computer, open <a href="https://music.youtube.com" target="_blank" rel="noopener">music.youtube.com</a> and make sure you're signed in.</li>
+            <li>Press <b>F12</b> to open DevTools, then click the <b>Network</b> tab.</li>
+            <li>In the filter box, type <code>browse</code>. Then click <b>Library</b> in YouTube Music so a request shows up.</li>
+            <li>Click a <code>browse?...</code> request whose method is <b>POST</b>. Under <b>Headers</b>, scroll to <b>Request Headers</b>, turn on <b>Raw</b>, select everything in that section and copy it. It must include a line starting with <code>authorization: SAPISIDHASH</code>.</li>
+            <li>Open <a href="https://github.com/nevinjosephtx/aissata-smartest-engineer/settings/secrets/actions/new" target="_blank" rel="noopener">your GitHub secret page</a>. Name: <code>YTMUSIC_HEADERS</code>. Paste the headers as the value and click <b>Add secret</b>.</li>
+            <li>Start it now: open <a href="https://github.com/nevinjosephtx/aissata-smartest-engineer/actions/workflows/now-playing.yml" target="_blank" rel="noopener">Update last song</a>, click <b>Run workflow</b>. After that it runs by itself about every 15 minutes.</li>
+          </ol>
+          <p class="lead" style="margin-top:10px">Those headers let the job read your YouTube Music account, so keep them private: only paste them into GitHub. If you sign out of YouTube Music, they stop working; redo these steps.</p>
+        </details>
+      </div>
       <div class="card">
         <h2>🔔 Get her pings</h2>
         <ol>

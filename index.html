@@ -45,6 +45,15 @@
         <button id="pingBtn" class="pill">Ping Nevin</button>
       </div>
     </header>
+    <button id="song" class="song hidden" type="button" aria-label="Play Nevin's last song">
+      <img id="songArt" class="song-art" alt="">
+      <span class="song-text">
+        <span class="song-label">Nevin's last song</span>
+        <span id="songTitle" class="song-title"></span>
+        <span id="songMeta" class="song-meta"></span>
+      </span>
+      <span class="song-play">Play</span>
+    </button>
     <div id="stage">
       <canvas id="view"></canvas>
       <video id="video" playsinline muted autoplay></video>
@@ -121,12 +130,26 @@
     </form>
   </div>
 
+  <!-- ============ SONG PLAYER ============ -->
+  <div id="player" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
+    <div class="modal-card player-card">
+      <div class="player-frame"><iframe id="playerFrame" title="Song player" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+      <div id="playerTitle" class="player-title"></div>
+      <div id="playerArtist" class="player-artist"></div>
+      <div class="modal-row">
+        <a id="playerYtm" class="btn-ghost" target="_blank" rel="noopener">Open in YouTube Music</a>
+        <button id="playerClose" class="btn-primary" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="config.js"></script>
   <script src="puzzle.js"></script>
   <script src="gallery.js"></script>
   <script type="module" src="messages.js"></script>
+  <script type="module" src="song.js"></script>
   <script type="module" src="camera.js"></script>
 </body>
 </html>
